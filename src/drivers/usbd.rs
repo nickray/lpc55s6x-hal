@@ -137,7 +137,13 @@ where
 
             match ep_dir {
                 UsbDirection::Out if !ep.is_out_buf_set() => {
-                    let size = max_packet_size;
+                    // Add one to only EP0 out buffer's size in order to prevent
+                    // the device from responding with NYET after receiving a ZLP
+                    let size = if index == 0 {
+                        max_packet_size + 1
+                    } else {
+                        max_packet_size
+                    };
                     let buffer = self.ep_allocator.allocate_buffer(size as _)?;
                     ep.set_out_buf(buffer);
                     debug_assert!(ep.is_out_buf_set());
